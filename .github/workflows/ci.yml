@@ -28,9 +28,8 @@ jobs:
         with:
           name: node-build
           path: dist/
-          
+
       - name: Generate Docker image tag
-        id: tag
         run: |
           echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
           echo "BRANCH_TAG=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
@@ -44,14 +43,14 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t ${{ secrets.DOCKER_USERNAME }}/nodeapp:$IMAGE_TAG \
-            -t ${{ secrets.DOCKER_USERNAME }}/nodeapp:$BRANCH_TAG \
+            -t "${{ secrets.DOCKER_USERNAME }}/nodeapp:$IMAGE_TAG" \
+            -t "${{ secrets.DOCKER_USERNAME }}/nodeapp:$BRANCH_TAG" \
             .
 
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/nodeapp:$IMAGE_TAG
-          docker push ${{ secrets.DOCKER_USERNAME }}/nodeapp:$BRANCH_TAG
+          docker push "${{ secrets.DOCKER_USERNAME }}/nodeapp:$IMAGE_TAG"
+          docker push "${{ secrets.DOCKER_USERNAME }}/nodeapp:$BRANCH_TAG"
 
       - name: Prepare SSH key
         env:

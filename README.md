@@ -1,59 +1,66 @@
 # Node.js Docker CI/CD Pipeline
 
-A simple Node.js application deployed to AWS EC2 using Docker and GitHub Actions.
+## Description
+Node.js application deployed to AWS EC2 using Docker Compose and GitHub Actions.
 
 ## Technologies
-
 - Node.js
 - Docker
-- Docker Hub
+- Docker Compose
+- PostgreSQL 15
 - GitHub Actions
+- Docker Hub
 - AWS EC2
 
-## Project Structure
-
-- `index.js` - Node.js HTTP server
-- `package.json` - Project configuration
+## Project Files
+- `index.js` - HTTP server and PostgreSQL connection
 - `Dockerfile` - Docker image configuration
-- `.dockerignore` - Docker build exclusions
-- `.github/workflows/ci.yml` - CI/CD workflow
+- `.dockerignore` - Excluded files
+- `docker-compose.yml` - Application and database services
+- `.github/workflows/ci.yml` - Automated CI/CD pipeline
 
-## Docker Setup
+## Deployment
+GitHub Actions automatically builds the Docker image, pushes it to Docker Hub, and deploys the application to AWS EC2 using Docker Compose.
 
-### Build Docker Image
+## Docker Compose
+The project uses two containers:
+- `nodeapp` - Node.js application on port 3000
+- `nodeapp-postgres` - PostgreSQL 15 database with persistent storage
+
+Run the services:
 
 ```bash
-docker build -t nodeapp:local .
+docker compose up -d
 ```
 
-### Run Docker Container
+Check containers:
 
 ```bash
-docker run -d --name nodeapp -p 3000:3000 nodeapp:local
+docker compose ps
 ```
 
-Open http://localhost:3000
+Check database connection:
 
-## CI/CD Pipeline
+```bash
+docker compose logs app
+```
 
-GitHub Actions automatically:
+## Results
+- Docker containers started successfully.
+- PostgreSQL connection established.
+- GitHub Actions deployment completed successfully.
 
-1. Installs dependencies and builds the project.
-2. Builds a Docker image with commit and branch tags.
-3. Pushes the image to Docker Hub.
-4. Connects to AWS EC2 via SSH.
-5. Deploys the updated Docker container.
-
-## Docker Hub
-
-Image: `korolvlad/nodeapp:main`
-
-## Result
-
-The application runs on AWS EC2 on port 3000.
-
-Expected output:
+Application output:
 
 ```text
 Hello CI/CD from AWS EC2!
 ```
+
+Database log:
+
+```text
+PostgreSQL connected successfully!
+```
+
+## Docker Hub
+Image: `korolvlad/nodeapp:main`

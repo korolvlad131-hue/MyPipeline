@@ -28,40 +28,30 @@ jobs:
         with:
           name: node-build
           path: dist/
-
-      - name: Prepare SSH key
-        env:
-          SSH_KEY_B64: ${{ secrets.EC2_SSH_KEY_B64 }}
+          
+      - name: Generate Docker image tag
+        id: tag
         run: |
-          mkdir -p ~/.ssh
-          printf '%s' "$SSH_KEY_B64" | base64 --decode > ~/.ssh/ec2_key
-          chmod 600 ~/.ssh/ec2_key
+          echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          echo "BRANCH_TAG=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
 
-      - name: Verify SSH host
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-        run: |
-          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Deploy files to EC2
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
+      - name: Build Docker image
         run: |
-          rsync -avz --exclude='.git' --exclude='node_modules' \
-            -e "ssh -i ~/.ssh/ec2_key -o StrictHostKeyChecking=yes" \
-            ./ "$EC2_USER@$EC2_HOST:/home/ubuntu/app/"
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/nodeapp:$IMAGE_TAG \
+            -t ${{ secrets.DOCKER_USERNAME }}/nodeapp:$BRANCH_TAG \
+            .
 
-      - name: Install and restart application
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
+      - name: Push Docker image
         run: |
-          ssh -i ~/.ssh/ec2_key "$EC2_USER@$EC2_HOST" << 'EOF'
-            set -e
-            cd /home/ubuntu/app
-            npm install --omit=dev
-            pm2 restart mypipeline || pm2 start npm --name mypipeline -- start
-            pm2 save
-          EOF
-  
+          docker push ${{ secrets.DOCKER_USERNAME }}/nodeapp:$IMAGE_TAG
+          docker push ${{ secrets.DOCKER_USERNAME }}/nodeapp:$BRANCH_TAG
+        
+
+
